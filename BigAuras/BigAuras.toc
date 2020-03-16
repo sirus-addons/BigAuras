@@ -2,7 +2,7 @@
 ## Title: BigAuras
 ## Author: Qblolz
 ## Version: 1.00
-## Notes: |@Version: 1@|Displays the duration of CC effects on unit frames
+## Notes: |@Version: 2@|Displays the duration of CC effects on unit frames
 ## SavedVariablesPerCharacter: BigAurasDB
 
 

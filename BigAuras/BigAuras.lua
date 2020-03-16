@@ -278,6 +278,7 @@ function BigAuras:OnLoad( self )
 			priority = 50,
 			spells = {
 				[66] = 50,    -- Invisibility(mage)
+				[32612] = 50, -- Invisibility (buff) (mage)
 				[18708] = 50, -- Fel Domination
 				[12975] = 50, -- Last Stand
 				[48792] = 50, -- Ice bound
@@ -304,7 +305,8 @@ function BigAuras:OnLoad( self )
 				[43012] = 50, -- Frost Ward
 				[43010] = 50, -- Fire Ward
 				[58597] = 50, -- Sacred Shield
-				[53651] = 50, -- Beacon of Light
+				[53563] = 10, -- Beacon of Light
+				[54428] = 50, -- Divine Plea
 				[498] = 50, -- Divine Protection
 				[871] = 50, -- ShieldWall
 				[64205] = 50, -- Divine Sacrifice
@@ -353,7 +355,10 @@ function BigAuras:OnLoad( self )
 			name = "Buffs other",
 			priority = 10,
 			spells = {
-				[308876]   = 40, -- Necrotic trinket (sirus.su)
+				[308876]   = 40, -- Necrotic trinket (245 ilvl) (sirus.su)
+				[308877]   = 40, -- Necrotic trinket (264 ilvl) (sirus.su)
+				[308878]   = 40, -- Necrotic trinket (274 ilvl) (sirus.su)
+				[308879]   = 40, -- Necrotic trinket (284 ilvl) (sirus.su)
 			}
 		},
 		{
@@ -837,6 +842,8 @@ function BigAuras:CreateFrames()
 					_frame:RemoveAura()
 				end
 
+				--_frame:SetScript("OnEvent", OnUpdate)
+				--_frame:RegisterEvent("UNIT_AURA")
 			end
 		end
     end
@@ -874,7 +881,7 @@ function BigAuras:OnInterrupt( ... )
 end
 
 function OnUpdate( self, elapsed )
-    for _, auraFilter in pairs({"HELPFUL", "HARMFUL"}) do
+    for _, auraFilter in pairs({"HARMFUL", "HELPFUL"}) do
         for auraIndex = 1, 40 do
             local _, _, icon, _, _, duration, expirationTime, _, _, _, spellID, _, _, _, _, _ = UnitAura(self.point, auraIndex, auraFilter)
             if spellID then
@@ -914,8 +921,12 @@ function OnUpdate( self, elapsed )
 									self.showingCategoryPriority == categoryPriority and
 									self.showingSpellPriority < spellPriority
 								)
-								
 							)
+						) or
+						(
+							self.showingSpellID and
+							self.showingSpellID == spellID and
+							self.showingSpellExpirationTime > expirationTime
 						) or
 						(
 							self.showingSpellID and
@@ -929,7 +940,6 @@ function OnUpdate( self, elapsed )
 						self.showingCategoryPriority = categoryPriority
 						self.showingSpellDuration = duration
 						self.showingSpellExpirationTime = expirationTime
-						
                         self:AddAura( spellID, icon, duration, expirationTime )
                     end
                 end
