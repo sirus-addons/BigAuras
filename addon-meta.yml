@@ -1,5 +1,5 @@
 name: BigAuras
 description: README.md
-version: 1
+version: 3
 category: 4
-directories: ["BigAuras"]
+directories: ["BigAuras", "BigAurasOptions"]
