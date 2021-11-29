@@ -1,15 +1,7 @@
-# Alternative for LoseControl 3.3.5 version
+Аддон, показывающий контроли, атакующие и защитные бафы/дебафы и прочее в зависимости от их приоритета. Полезный для PvP-аддон, основанный на LoseControl.
 
-## Based on
-* BigDebuffs
-* LoseControl
-* PhotoRobot
+Настройка
+"Настройки" -> "Интерфейс" -> "Модификации" -> "BigAuras" - окно настройки аддона.
 
-#### Advanced settings as opposed to BigDebuffs or LoseControl
-* Alpha for frame that showing information for player (if displaying in center)
-* More categories for displaying
-* Can change priority for spell in category
-* Can disable category for frame
-
-###### support me
+###### Поддержать автора аддона
 * https://streamlabs.com/qbjw/tip
