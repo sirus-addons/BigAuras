@@ -2,4 +2,4 @@ name: BigAuras
 description: README.md
 version: 4
 category: 4
-directories: ["BigAuras", "BigAurasOptions"]
+directories: ["BigAuras"]
