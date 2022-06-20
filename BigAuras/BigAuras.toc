@@ -1,8 +1,10 @@
 ## Interface: 30300
 ## Title: BigAuras
 ## Author: Qblolz
-## Version: 1.00
-## SavedVariablesPerCharacter: BigAurasDB
-## Notes: |@Version: 3@|Displays the duration of CC effects on unit frames
+## Version: 1.0.1
+## Notes: |@Version: 4@|
+## SavedVariables: BigAurasDB
+## OptionalDeps: OmniCC, sArena, Blizzard_ArenaUI
 
-BigAuras.lua
+embeds.xml
+load.xml
