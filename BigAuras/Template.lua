@@ -114,70 +114,70 @@ BigAuras.anchors2frames = {
     ["arena1"] = {
         ["Blizzard"] = "ArenaEnemyFrame1ClassPortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame1ClassPortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = "ElvUF_Arena1",
         ["ShadowedUnitFrames"] = nil
     },
     ["arena2"] = {
         ["Blizzard"] = "ArenaEnemyFrame2ClassPortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame2ClassPortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = "ElvUF_Arena2",
         ["ShadowedUnitFrames"] = nil
     },
     ["arena3"] = {
         ["Blizzard"] = "ArenaEnemyFrame3ClassPortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame3ClassPortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = "ElvUF_Arena3",
         ["ShadowedUnitFrames"] = nil
     },
     ["arena4"] = {
         ["Blizzard"] = "ArenaEnemyFrame4ClassPortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame4ClassPortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = "ElvUF_Arena4",
         ["ShadowedUnitFrames"] = nil
     },
     ["arena5"] = {
         ["Blizzard"] = "ArenaEnemyFrame5ClassPortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame5ClassPortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = "ElvUF_Arena5",
         ["ShadowedUnitFrames"] = nil
     },
     ["arenapet1"] = {
         ["Blizzard"] = "ArenaEnemyFrame1PetFramePortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame1PetFramePortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = nil,
         ["ShadowedUnitFrames"] = nil
     },
     ["arenapet2"] = {
         ["Blizzard"] = "ArenaEnemyFrame2PetFramePortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame2PetFramePortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = nil,
         ["ShadowedUnitFrames"] = nil
     },
     ["arenapet3"] = {
         ["Blizzard"] = "ArenaEnemyFrame3PetFramePortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame3PetFramePortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = nil,
         ["ShadowedUnitFrames"] = nil
     },
     ["arenapet4"] = {
         ["Blizzard"] = "ArenaEnemyFrame4PetFramePortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame4PetFramePortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = nil,
         ["ShadowedUnitFrames"] = nil
     },
     ["arenapet5"] = {
         ["Blizzard"] = "ArenaEnemyFrame5PetFramePortrait",
         ["Perl"] = nil,
-        ["XPerl"] = "ArenaEnemyFrame5PetFramePortrait",
+        ["XPerl"] = nil,
         ["ElvUI"] = nil,
         ["ShadowedUnitFrames"] = nil
     }
@@ -249,7 +249,7 @@ local function DETECT_UNIT_AURA(self, unit)
                         if frame.db.unlock or BigAuras.db.profile.anchor ~= "Blizzard" then
                             frame.Icon:SetTexture(icon)
                         else
-                            if BigAuras:support_s_Arena() and BigAuras:isArenaUnit(unit) then
+                            if (BigAuras:support_s_Arena() or BigAuras:IsGladdyLoaded()) and BigAuras:isArenaUnit(unit) then
                                 frame.Icon:SetTexture(icon)
                             else
                                 SetPortraitToTexture(frame.Icon, icon)
@@ -292,11 +292,22 @@ local function PLAYER_TARGET_CHANGED()
         frame:UNIT_AURA("target")
     end
 end
+
 local function PLAYER_FOCUS_CHANGED()
     local frame = BigAuras:getOrCreate("focus")
     if frame then
         frame:UNIT_AURA("focus")
     end
+end
+
+local function PLAYER_ENTERING_WORLD(self)
+    self.Icon:SetTexture(nil)
+    self.auraTrackerStorage = {}
+    self.showingSpellID = nil
+    self.showingSpellPriority = nil
+    self.showingCategoryPriority = nil
+    self.showingSpellDuration = nil
+    self.showingSpellExpirationTime = nil
 end
 
 local function SetCooldownTime(self, expiration, duration)
@@ -327,6 +338,29 @@ local function SetCircuitCooldownTime(self, expiration, duration)
     end
 end
 
+local function UPDATE_BATTLEFIELD_STATUS(_, index)
+    local status, _, _, _, _, teamSize, _, _, _, _ = GetBattlefieldStatus(index)
+    local instanceType = select(2, IsInInstance())
+    if ((instanceType == "arena" or GetNumArenaOpponents() > 0) and status == "active") then
+        if ( teamSize > 0 ) then
+            for _, unit in pairs(BigAuras:GetUnits()) do
+                local frame = BigAuras:getOrCreate(unit)
+
+                if frame then
+                    frame.PLAYER_ENTERING_WORLD = PLAYER_ENTERING_WORLD
+                    if unit == "target" then
+                        frame:RegisterEvent("PLAYER_TARGET_CHANGED")
+                        frame.PLAYER_TARGET_CHANGED = PLAYER_TARGET_CHANGED
+                    elseif unit == "focus" then
+                        frame:RegisterEvent("PLAYER_FOCUS_CHANGED")
+                        frame.PLAYER_FOCUS_CHANGED = PLAYER_FOCUS_CHANGED
+                    end
+                end
+            end
+        end
+    end
+end
+
 function BigAuras:OnInitialize()
     local _def = {
         enable = true,
@@ -350,7 +384,9 @@ function BigAuras:OnInitialize()
 
     for _, unit in pairs(self:GetUnits()) do
         local frame = self:getOrCreate(unit)
+
         if frame then
+            frame.PLAYER_ENTERING_WORLD = PLAYER_ENTERING_WORLD
             if unit == "target" then
                 frame:RegisterEvent("PLAYER_TARGET_CHANGED")
                 frame.PLAYER_TARGET_CHANGED = PLAYER_TARGET_CHANGED
@@ -367,11 +403,21 @@ function BigAuras:getOrCreate(unit)
         return
     end
 
-    -- init
-    local parent, portrait = self:GetParent(unit)
+    local parent, portrait
+    local parentForExecPosition
 
-    if self.db.profile[unit].unlock then
-        parent = UIParent
+    if self:IsGladdyLoaded() and self:isArenaUnit(unit) then
+        parent = _G['GladdyAura_' .. unit]
+        portrait = nil
+        if parent then
+            parentForExecPosition = parent.frame
+        end
+    else
+        parent, portrait = self:GetParent(unit)
+
+        if self.db.profile[unit].unlock then
+            parent = UIParent
+        end
     end
 
     if parent == nil then
@@ -443,12 +489,21 @@ function BigAuras:getOrCreate(unit)
             frame.Cooldown:SetPoint("TOPLEFT", portrait, 3, -3)
             frame.Cooldown:SetPoint("BOTTOMRIGHT", portrait, -3, 3)
         else
-            frame:SetFrameLevel(parent:GetFrameLevel() + 10)
-            frame:SetScale(parent:GetScale())
-            frame:SetAllPoints(parent)
+            if parentForExecPosition then
+                frame:SetFrameLevel(parentForExecPosition:GetFrameLevel() + 10)
+                frame:SetScale(parentForExecPosition:GetScale())
+                frame:SetAllPoints(parentForExecPosition)
 
-            frame.Cooldown:SetAllPoints(parent)
-            frame.CircuitCooldown.SetAllPoints(parent)
+                frame.Cooldown:SetAllPoints(parentForExecPosition)
+                frame.CircuitCooldown.SetAllPoints(parentForExecPosition)
+            else
+                frame:SetFrameLevel(parent:GetFrameLevel() + 10)
+                frame:SetScale(parent:GetScale())
+                frame:SetAllPoints(parent)
+
+                frame.Cooldown:SetAllPoints(parent)
+                frame.CircuitCooldown.SetAllPoints(parent)
+            end
         end
     end
 
@@ -610,3 +665,18 @@ end
 function BigAuras:isArenaUnit(unit)
     return unit:find("arena")
 end
+
+function BigAuras:IsGladdyLoaded()
+    if IsAddOnLoaded("Gladdy") then
+        return true
+    end
+
+    return nil
+end
+
+BigAuras.events = CreateFrame("Frame")
+BigAuras.events:RegisterEvent("UPDATE_BATTLEFIELD_STATUS")
+BigAuras.events.UPDATE_BATTLEFIELD_STATUS = UPDATE_BATTLEFIELD_STATUS
+BigAuras.events:SetScript("OnEvent", function(_self, _event, ...)
+    _self[_event](_self, ...)
+end)
