@@ -1,7 +1,7 @@
 ## Interface: 30300
 ## Title: BigAuras
 ## Author: Qblolz
-## Notes: |@Version: 6@|
+## Notes: |@Version: 7@|
 ## Version: 1.0.18
 ## SavedVariables: BigAurasDB
 ## OptionalDeps: OmniCC, sArena, Blizzard_ArenaUI
