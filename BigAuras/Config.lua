@@ -77,7 +77,7 @@ local function loadOptions()
                         if InCombatLockdown() or instanceType == "arena" then
                             --print(addonName .. ": Must leave combat and arena to do that.")
                         else
-                            local frame = BigAuras:getOrCreate(unit)
+                            local frame = BigAuras:getOrCreate(unit, true)
 
                             if not frame then return end
                             if not frame:GetParent():IsShown() then return end
@@ -85,7 +85,7 @@ local function loadOptions()
                             local texturePath = UnitFactionGroup('player') == "Horde" and "Interface\\Icons\\inv_jewelry_trinketpvp_02" or "Interface\\Icons\\inv_jewelry_trinketpvp_01"
 
                             if not frame.testMode then
-                                if frame.db.unlock or (BigAuras:isArenaUnit(unit) and (BigAuras:support_s_Arena() or BigAuras:IsGladdyLoaded())) then
+                                if frame.db.unlock or frame.compact or (BigAuras:isArenaUnit(unit) and (BigAuras:support_s_Arena() or BigAuras:IsGladdyLoaded())) then
                                     frame.Icon:SetTexture(texturePath)
                                 else
                                     SetPortraitToTexture(frame.Icon, texturePath)
@@ -101,6 +101,7 @@ local function loadOptions()
                                 frame.testMode = false
                                 frame:Hide()
                                 frame.UnitText:Hide()
+                                BigAuras:getOrCreate(unit)
                             end
 
                             if frame.db.unlock and frame.testMode then
@@ -127,6 +128,7 @@ local function loadOptions()
                         local _unit = BigAuras:GetUnits()[val]
                         local fromDB = BigAuras.db.profile[_unit]
                         BigAuras.db.profile[unit] = CopyTable(fromDB)
+                        BigAuras:RefreshProfile()
                     end
                 },
                 enable = {
@@ -319,17 +321,17 @@ local function loadOptions()
                                 return
                             end
 
-                            if parentID and not BigAuras.db.profile[unit][categoryName][parentID] then
+                            if parentID and not BigAuras.db.profile[unit].spells[parentID] then
                                 BigAuras.db.profile[unit].spells[parentID] = {category = categoryName,priority = 1}
                             end
 
-                            if parentID and not BigAuras.db.profile[unit][categoryName][spellID] then
+                            if parentID and not BigAuras.db.profile[unit].spells[spellID] then
                                 BigAuras.db.profile[unit].spells[spellID] = {parent = parentID}
                             else
                                 BigAuras.db.profile[unit].spells[spellID] = {category = categoryName, priority = 1}
                             end
 
-                            if parentID then spellID = parentID end
+                            local spellID = parentID or spellID
 
                             options.args.general.args[unit].args[categoryName].args[tostring(spellID)] = {
                                 name = select(1,GetSpellInfo(spellID)),
