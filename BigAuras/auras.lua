@@ -39,15 +39,8 @@ BigAurasSpells.spells = {
         [19263] = {category = "immunity",priority = 1},
         [46924] = {category = "immunity",priority = 1},
         [48707] = {category = "immunity",priority = 1},
-        [34692] = {category = "immunity",priority = 1},
             [34471] = {parent = 34692},
         [31224] = {category = "immunity",priority = 1},
-        [316243] = {category = "immunity",priority = 1},
-        [316271] = {category = "immunity",priority = 1},
-        [316294] = {category = "immunity",priority = 1},
-        [316372] = {category = "immunity",priority = 1},
-        [316405] = {category = "immunity",priority = 1},
-        [316413] = {category = "immunity",priority = 1},
         [23920] = {category = "immunity",priority = 1},
             [43443] = {parent = 23920},
             [59725] = {parent = 23920},
@@ -85,7 +78,7 @@ BigAurasSpells.spells = {
             [60210] = {parent = 14309},
         [24394]= {category = "crowdControl",priority = 1},	-- Intimidation
         [14327]= {category = "crowdControl",priority = 1},	-- Scare Beast (works against Druids in most forms and Shamans using Ghost Wolf)
-            [1513] = {parent = 4327},
+            [1513] = {parent = 14327},
             [14326] = {parent = 14327},
         [19503]= {category = "crowdControl",priority = 1},	-- Scatter Shot
         [53568]= {category = "crowdControl",priority = 1},	-- Sonic Blast (Bat)
@@ -178,11 +171,9 @@ BigAurasSpells.spells = {
         [12798]= {category = "crowdControl",priority = 1},	-- Revenge Stun
         [46968]= {category = "crowdControl",priority = 1},	-- Shockwave
         [30217]= {category = "crowdControl",priority = 1},	-- Adamantite Grenade
-            [67769] = {parent = 30217},
             [67890] = {parent = 30217},
         [67769]= {category = "crowdControl",priority = 1},	-- Cobalt Frag Bomb
         [30216]= {category = "crowdControl",priority = 1},	-- Fel Iron Bomb
-        [316386]= {category = "crowdControl",priority = 1},	-- War Stomp
             -- Silences
         [47476]= {category = "crowdControl",priority = 1},	-- Strangulate
         [34490]= {category = "crowdControl",priority = 1},	-- Silencing Shot
@@ -198,12 +189,7 @@ BigAurasSpells.spells = {
         [375039]= {category = "crowdControl",priority = 1},	-- stun
         [374994]= {category = "crowdControl",priority = 1},	-- stun
         [375010]= {category = "crowdControl",priority = 1},	-- stun
-        [316421]= {category = "crowdControl",priority = 1},	-- Arcane Torrent
-            [302387] = {parent = 316421},
-            [316418] = {parent = 316421},
-            [316419] = {parent = 316421},
-            [316420] = {parent = 316421},
-            [375001] = {parent = 316421},
+        [375001]= {category = "crowdControl",priority = 1},
 
     --defensive
         [66] = {category = "defensive",priority = 1},    -- Invisibility(mage)
@@ -296,6 +282,9 @@ BigAurasSpells.spells = {
         [374999] = {category = "defensive",priority = 1}, -- ?
         [375016] = {category = "defensive",priority = 1}, -- ?
         [375019] = {category = "defensive",priority = 1}, -- slow reduce
+        [375018] = {category = "defensive",priority = 1},
+        [375035] = {category = "defensive",priority = 1},
+        [375040] = {category = "defensive",priority = 1},
 
 
     --offensive
@@ -357,7 +346,6 @@ BigAurasSpells.spells = {
         
         
     --roots
-        [319322] = {category = "roots",priority = 1}, -- Lightforged
         [53148] = {category = "roots",priority = 1},  -- Charge(pets)
         [53308] = {category = "roots",priority = 1},  -- Entangling Roots
             [339] = {parent = 53308},
@@ -402,7 +390,6 @@ BigAurasSpells.spells = {
             [55507] = {parent = 55509},
             [55508] = {parent = 55509},
         [4167]  = {category = "roots",priority = 1},	-- Web (Spider)
-        [90112] = {category = "roots",priority = 1},	-- Naga (Sirus.su)
         [33395] = {category = "roots",priority = 1},	-- Freeze (Water Elemental)
         [42917] = {category = "roots",priority = 1},	-- Frost Nova
             [122] = {parent = 42917},
@@ -419,7 +406,6 @@ BigAurasSpells.spells = {
         [39965] = {category = "roots",priority = 1},	-- Frost Grenade
         [55536] = {category = "roots",priority = 1},	-- Frostweave Net
         [13099] = {category = "roots",priority = 1},	-- Net-o-Matic
-        [316455] = {category = "roots",priority = 1},   -- Vulpera root (after (stun)) - Sirus.su
 }
 
 function BigAurasSpells:GetListCategories()

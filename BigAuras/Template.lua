@@ -246,7 +246,7 @@ local function DETECT_UNIT_AURA(self, unit)
                         frame.showingSpellDuration = duration
                         frame.showingSpellExpirationTime = expirationTime
 
-                        if frame.db.unlock or BigAuras.db.profile.anchor ~= "Blizzard" then
+                        if frame.db.unlock or BigAuras.db.profile.anchor ~= "Blizzard" or frame.compact then
                             frame.Icon:SetTexture(icon)
                         else
                             if (BigAuras:support_s_Arena() or BigAuras:IsGladdyLoaded()) and BigAuras:isArenaUnit(unit) then
@@ -311,6 +311,25 @@ local function PLAYER_ENTERING_WORLD(self)
     self.showingCategoryPriority = nil
     self.showingSpellDuration = nil
     self.showingSpellExpirationTime = nil
+end
+
+local function UPDATE_PARTY_ANCHORS()
+    if BigAuras.db.profile.anchor ~= "Blizzard" then return end
+
+    for i = 1, 4 do
+        local unit = "party" .. i
+        local frame = BigAuras.frames[unit]
+
+        if frame and frame.db.enable and not frame.db.unlock then
+            local parent = BigAuras:GetParent(unit)
+
+            if parent and parent ~= frame:GetParent() then
+                BigAuras:getOrCreate(unit)
+                PLAYER_ENTERING_WORLD(frame)
+                frame:UNIT_AURA(unit)
+            end
+        end
+    end
 end
 
 local function SetCooldownTime(self, expiration, duration)
@@ -380,6 +399,9 @@ function BigAuras:OnInitialize()
     for _, unit in pairs(self:GetUnits()) do self.defaults.profile[unit] = CopyTable(_def) end
 
     self.db = LibStub:GetLibrary("AceDB-3.0"):New("BigAurasDB", self.defaults, true)
+    self.db.RegisterCallback(self, "OnProfileChanged", "RefreshProfile")
+    self.db.RegisterCallback(self, "OnProfileCopied", "RefreshProfile")
+    self.db.RegisterCallback(self, "OnProfileReset", "RefreshProfile")
 	
 	if self.db.profile["minimap"] == nil then
 		self.db.profile = CopyTable(self.defaults.profile)
@@ -399,15 +421,32 @@ function BigAuras:OnInitialize()
             end
         end
     end
+
+    if CompactPartyFrame and CompactPartyFrame.RefreshMembers then
+        hooksecurefunc(CompactPartyFrame, "RefreshMembers", UPDATE_PARTY_ANCHORS)
+    end
 end
 
-function BigAuras:getOrCreate(unit)
+function BigAuras:RefreshProfile()
+    for _, unit in pairs(self:GetUnits()) do
+        local frame = self.frames[unit]
+
+        if frame then
+            frame.db = self.db.profile[unit]
+        end
+
+        self:getOrCreate(unit)
+    end
+end
+
+function BigAuras:getOrCreate(unit, test)
     if not self.db.profile[unit].enable then
         return
     end
 
     local parent, portrait
     local parentForExecPosition
+    local compact
 
     if self:IsGladdyLoaded() and self:isArenaUnit(unit) then
         parent = _G['GladdyAura_' .. unit]
@@ -416,9 +455,11 @@ function BigAuras:getOrCreate(unit)
             parentForExecPosition = parent.frame
         end
     else
-        parent, portrait = self:GetParent(unit)
+        parent, portrait, parentForExecPosition = self:GetParent(unit)
+        compact = parentForExecPosition ~= nil and not self.db.profile[unit].unlock
+        test = test or (self.frames[unit] and self.frames[unit].testMode)
 
-        if self.db.profile[unit].unlock then
+        if self.db.profile[unit].unlock or (test and compact and self:isArenaUnit(unit) and not parent:IsVisible()) then
             parent = UIParent
         end
     end
@@ -465,6 +506,8 @@ function BigAuras:getOrCreate(unit)
         frame = self.frames[unit]
     end
 
+    frame.compact = compact
+
     if frame.db.unlock or parent == UIParent then
         frame:ClearAllPoints()
         frame:SetParent(parent)
@@ -477,6 +520,10 @@ function BigAuras:getOrCreate(unit)
         frame.Cooldown:SetAllPoints()
         frame:SetFrameLevel(100)
     else
+        if frame:GetParent() ~= parent then
+            frame:SetParent(parent)
+        end
+
         frame:SetAlpha(frame.db.alpha)
         if portrait and self.db.profile.anchor == "Blizzard" then
             portrait:SetDrawLayer("BACKGROUND")
@@ -509,14 +556,14 @@ function BigAuras:getOrCreate(unit)
                 frame:SetAllPoints(parentForExecPosition)
 
                 frame.Cooldown:SetAllPoints(parentForExecPosition)
-                frame.CircuitCooldown.SetAllPoints(parentForExecPosition)
+                frame.CircuitCooldown:SetAllPoints(parentForExecPosition)
             else
                 frame:SetFrameLevel(parent:GetFrameLevel() + 10)
                 frame:SetScale(parent:GetScale())
                 frame:SetAllPoints(parent)
 
                 frame.Cooldown:SetAllPoints(parent)
-                frame.CircuitCooldown.SetAllPoints(parent)
+                frame.CircuitCooldown:SetAllPoints(parent)
             end
         end
     end
@@ -532,7 +579,7 @@ function BigAuras:getOrCreate(unit)
         ) or
         (frame.db.unlock and not frame.db.showSwipe)
     then
-        if self:isArenaUnit(frame.unit) and not self:support_s_Arena() then
+        if (self:isArenaUnit(frame.unit) and not self:support_s_Arena()) or frame.compact then
             --dump
         else
             frame.Cooldown:Hide()
@@ -563,7 +610,7 @@ function BigAuras:SetupDrag(frame, frameToClick, frameToMove)
     frameToClick:HookScript("OnMouseDown", function()
         if IsShiftKeyDown() and IsControlKeyDown() and not frameToMove.isMoving then
             if InCombatLockdown() then
-                print(addonName .. ": Must leave combat to do that.")
+                print("BigAuras: Must leave combat to do that.")
                 return
             end
             frameToMove:StartMoving()
@@ -600,6 +647,16 @@ end
 function BigAuras:GetParent(unit)
     if not self.anchors2frames[unit] or not self.anchors2frames[unit][self.db.profile.anchor] then
         return
+    end
+
+    if self.db.profile.anchor == "Blizzard" and EditModeManagerFrame
+        and ((self:isArenaUnit(unit) and not IsAddOnLoaded("sArena")) or (unit:find("^party") and EditModeManagerFrame:UseRaidStylePartyFrames()))
+    then
+        local member, slot = self:GetCompactFrame(unit)
+
+        if member then
+            return member, nil, slot
+        end
     end
 
     local parent, portrait = self.anchors2frames[unit][self.db.profile.anchor]
@@ -652,6 +709,22 @@ function BigAuras:GetParent(unit)
     return parent, portrait
 end
 
+function BigAuras:GetCompactFrame(unit)
+    local id = tonumber(unit:match("^arena(%d)$"))
+
+    if id and CompactArenaFrame then
+        local member = CompactArenaFrame.memberUnitFrames[id]
+
+        return member, member and member.DebuffFrame
+    elseif unit:find("^party%d$") and CompactPartyFrame and CompactPartyFrame.memberUnitFrames then
+        for _, member in ipairs(CompactPartyFrame.memberUnitFrames) do
+            if member.unit == unit then
+                return member, member.centerStatusIcon
+            end
+        end
+    end
+end
+
 function BigAuras:support_s_Arena()
     if IsAddOnLoaded("sArena") and sArenaIconStyle then
         return sArenaIconStyle()
@@ -673,6 +746,10 @@ function BigAuras:GetSpellDataBySpellID(unit, targetSpellID)
 
         if _spell.parent then
             _spell = profile.spells[_spell.parent]
+
+            if not _spell then
+                return nil
+            end
         end
 
         _spellData = {

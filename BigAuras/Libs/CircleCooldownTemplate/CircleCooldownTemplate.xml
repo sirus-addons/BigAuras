@@ -39,9 +39,9 @@
                   <Alpha parentKey="blingAlpha" startDelay="0.5" duration="1" change="-1" order="1" />
                   <Scripts>
                     <OnFinished>
-                      self:GetParent():GetParent().Text:SetAlpha(1);
-                      self:GetParent():GetParent().Edge:SetAlpha(1);
-                      self:GetParent():GetParent().Cooldown:SetAlpha(1);
+                      self:GetParent():GetParent():GetParent().TimerText:SetAlpha(1);
+                      self:GetParent():GetParent():GetParent().Edge:SetAlpha(1);
+                      self:GetParent():GetParent():GetParent().Cooldown:SetAlpha(1);
                     </OnFinished>
                   </Scripts>
                 </AnimationGroup>
